@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -500,15 +500,10 @@ const firebaseConfig = {
   appId: "1:113969564475:web:fda9fdfa7c4f4b0cc8851e"
 };
 
-let useFirebase = false;
-let fdb = null;
-
-// API 키가 수정되었을 때만 Firebase를 켭니다
-if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("여기에_")) {
-  firebase.initializeApp(firebaseConfig);
-  fdb = firebase.database();
-  useFirebase = true;
-}
+// 조건문 없이 무조건 Firebase 초기화
+firebase.initializeApp(firebaseConfig);
+let fdb = firebase.database();
+let useFirebase = true;
 
 /* ══ 저장소 (로컬 저장, 실패 시 메모리) ══ */
 const store=(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return localStorage;}
