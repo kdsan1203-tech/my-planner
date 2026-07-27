@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -487,8 +487,7 @@ input,textarea{font-family:inherit;font-size:inherit;color:inherit}
 "use strict";
 
 /* =======================================================================
-   ★ Firebase 연결 설정 (매우 중요!) ★
-   여기에 Firebase 콘솔의 '프로젝트 설정'에서 복사한 값들을 덮어쓰세요.
+   ★ Firebase 연결 설정 ★
 ======================================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyC5btHXxZnHmGU0XCx9JbyDg9frrqIMHBM",
@@ -500,7 +499,7 @@ const firebaseConfig = {
   appId: "1:113969564475:web:fda9fdfa7c4f4b0cc8851e"
 };
 
-// 조건문 없이 무조건 Firebase 초기화
+// 강제 연결 시작
 firebase.initializeApp(firebaseConfig);
 let fdb = firebase.database();
 let useFirebase = true;
@@ -565,7 +564,7 @@ let saveTimer=null;
 let isRemoteUpdating = false;
 
 function save(now){
-  if(isRemoteUpdating) return; 
+  if(isRemoteUpdating) return;
   clearTimeout(saveTimer);
   const go=()=>{
     try{
@@ -810,7 +809,7 @@ function renderRit(d){
   }
 }
 
-/* ══ 통계 및 보고서 로직 (생략없이 포함됨) ══ */
+/* ══ 통계 및 보고서 로직 ══ */
 const ST=b=>b.done?'<span class="st-done">완료</span>'
   :(b.subs&&b.subs.some(s=>s.done))?'<span class="st-ing">진행</span>'
   :'<span class="st-no">미착수</span>';
@@ -1167,35 +1166,37 @@ window.addEventListener("beforeunload",()=>save(true));
 // =======================================================================
 // ★ 빈 데이터 덮어쓰기 차단 로직 적용 완료 ★
 // =======================================================================
+
+// 1. 화면부터 무조건 먼저 띄워줍니다 (하얀 화면 방지)
+render();
+
 if (useFirebase) {
   flag("클라우드 연결 중...");
   fdb.ref('planner_data/my_planner').on('value', (snapshot) => {
     const remoteData = snapshot.val();
     
-    // 1. 클라우드에 '의미 있는 기록(days)'이 하나라도 있을 때만 내 PC에 덮어씌움
+    // 2. 클라우드에 '의미 있는 기록(days)'이 하나라도 있을 때만 덮어씌움
     if (remoteData && remoteData.days && Object.keys(remoteData.days).length > 0) {
       isRemoteUpdating = true;
       db = remoteData;
       store.setItem(KEY, JSON.stringify(db)); // 로컬 백업 갱신
-      render();
+      render(); // 화면 다시 그리기
       flag("동기화 완료");
       setTimeout(() => { isRemoteUpdating = false; }, 300);
     } 
-    // 2. 클라우드가 텅 비어있다면? 내 PC에 있는 기록을 클라우드로 밀어넣음! (데이터 보호)
+    // 3. 클라우드가 텅 비어있다면? 내 PC에 있는 기록을 클라우드로 밀어넣음! (데이터 보호)
     else {
       if (db.days && Object.keys(db.days).length > 0) {
         fdb.ref('planner_data/my_planner').set(db)
            .then(() => flag("동기화 완료"))
            .catch(() => flag("권한 오류"));
       } else {
-        render(); // 둘 다 비어있을 땐 그냥 화면만 표시
-        flag("동기화 준비");
+        flag("동기화 준비 완료");
       }
     }
   });
 } else {
-  render();
-  flag("API 코드를 넣어주세요");
+  flag("오프라인 모드");
 }
 </script>
 </body>
